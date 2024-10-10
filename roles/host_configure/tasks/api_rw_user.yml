@@ -1,0 +1,32 @@
+---
+- name: Check API RW User
+  shell: pveum user list | grep "{{ api_rw_user_id }}"
+  register: api_rw_user_exists
+  ignore_errors: true
+  changed_when: false
+
+- name: Create API RW Group
+  command: pveum group add "{{ api_rw_user_id }}"-group
+  when: api_rw_user_exists.rc == 1
+
+- name: Create API RW User
+  command: pveum user add "{{ api_rw_user_id }}"@pve -comment 'API User for RW access' --password "{{ api_rw_password }}" --groups "{{ api_rw_user_id }}-group"
+  when: api_rw_user_exists.rc == 1
+
+- name: Create API RW Token
+  command: pveum user token add "{{ api_rw_user_id }}"@pve "{{ api_rw_user_id }}"-token -comment 'API RW User Token' -privsep 1
+  register: api_rw_token_out
+  when: api_rw_user_exists.rc == 1
+  notify: Print api_rw_user token value
+
+- name: Add Administrator Role to User
+  command: pveum acl modify / --groups "{{ api_rw_user_id }}-group" --roles Administrator --propagate 1
+  when: api_rw_user_exists.rc == 1
+
+- name: Add Administrator Role to Group
+  command: pveum acl modify / --users "{{ api_rw_user_id }}@pve" --roles Administrator --propagate 1
+  when: api_rw_user_exists.rc == 1
+
+- name: Add Administrator Role to API Token
+  command: pveum acl modify / --tokens '{{ api_rw_user_id }}@pve!{{ api_rw_user_id }}-token' --roles Administrator --propagate 1
+  when: api_rw_user_exists.rc == 1

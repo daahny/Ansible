@@ -1,0 +1,33 @@
+---
+- name: Force root SSH to use pubkey auth
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin \w*$'
+    replace: 'PermitRootLogin prohibit-password'
+  notify: Restart SSHD
+
+- name: Enable pubkey authentication
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PubkeyAuthentication \w*$'
+    replace: 'PubKeyAuthentication yes'
+  notify: Restart SSHD
+
+- name: Create .ssh directory
+  file:
+    path: /root/.ssh
+    state: directory
+    mode: 0755
+
+- name: Create /root/.ssh/authorized_keys
+  file:
+    path: /root/.ssh/authorized_keys
+    state: touch
+  changed_when: false
+
+- name: Public SSH keys
+  lineinfile:
+    path: /root/.ssh/authorized_keys
+    line: "{{ item }}"
+    state: present
+  with_items: "{{ ssh_public_keys }}"

@@ -1,0 +1,8 @@
+---
+- hosts: templates
+  become: true
+  vars_files:
+    - vars/secrets.yml
+
+  roles:
+    - vm_configure

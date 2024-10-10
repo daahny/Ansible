@@ -1,0 +1,23 @@
+---
+- name: Enable IOMMU in bootloader
+  lineinfile:
+    path: /etc/kernel/cmdline
+    regexp: "^(.*?)( intel_iommu=on iommu=pt)?$"
+    line: '\1 intel_iommu=on iommu=pt'
+    state: present
+    backrefs: yes
+  notify: 
+    - proxmox-boot-tool refresh
+    - Reboot required
+
+- name: Load VFIO modules
+  lineinfile:
+    path: /etc/modules
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - vfio
+    - vfio_iommu_type1
+    - vfio_pci
+  notify: Update initramfs
+

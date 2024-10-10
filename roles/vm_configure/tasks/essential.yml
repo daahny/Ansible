@@ -1,0 +1,55 @@
+- name: Test internet access
+  command: ping -c 2 google.com
+  changed_when: false
+
+- name: Update packages
+  dnf:
+    update_cache: yes
+
+- name: Upgrade packages
+  dnf:
+    name: '*'
+    state: latest
+
+- name: Install packages
+  dnf:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    "{{ packages }}"
+  notify: Start and Enable qemu-guest-agent
+
+- name: Add .vimrc
+  template:
+    src: "templates/vimrc.j2"
+    dest: "/root/.vimrc"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Add non-root group
+  group:
+    name: "{{ ansible_hostname }}"
+    gid: 1000
+  
+- name: Add docker group
+  group:
+    name: docker
+
+- name: Add non-root user
+  user:
+    name: "{{ ansible_hostname }}"
+    password: "{{ non_root_password | password_hash('sha512') }}"
+    update_password: on_create
+    shell: /sbin/nologin
+    uid: 1000
+    create_home: false
+    groups:
+      - "{{ ansible_hostname }}"
+      - docker
+
+- name: Edit PS1 variable
+  lineinfile:
+    path: /etc/profile
+    line: PS1='[\h] \[\033[1;35m\]~\[\033[0m\] '
+    state: present

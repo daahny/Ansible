@@ -1,0 +1,50 @@
+- name: Ensure pip
+  apt:
+    name: python3-pip
+    state: present
+
+- name: Ensure proxmoxer
+  apt:
+    name: python3-proxmoxer
+    state: present
+
+- name: Ensure requests
+  apt:
+    name: python3-requests
+    state: present
+
+- name: Create new VM
+  proxmox_kvm:
+    agent: yes
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_rw_user }}"
+    api_token_id: "{{ api_rw_token_id }}"
+    api_token_secret: "{{ api_rw_token_secret }}"
+    autostart: true
+    balloon: 4096
+    bios: seabios
+    boot: 'order=ide0;scsi0;net0'
+    bootdisk: scsi0
+    cores: 2
+    cpu: host
+    ide:
+      ide0: 'local:iso/Fedora-Server-dvd-x86_64-37-1.7.iso,media=cdrom'
+    machine: q35
+    memory: 4096
+    name: "{{ VMName | upper }}"
+    net:
+      net0: 'virtio,bridge=vmbr0,tag=100,firewall=0'
+    node: "{{ api_host }}"
+    onboot: true
+    ostype: l26
+    scsi:
+      scsi0: "data-images:20,format=raw"
+    scsihw: virtio-scsi-single
+    sockets: 1
+    state: present
+    vmid: "{{ VMID }}"
+  register: new_vm
+  notify: 
+    - Start VM
+    # - Add alias
+    # - Add static DHCP entry

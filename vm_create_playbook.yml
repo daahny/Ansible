@@ -1,0 +1,17 @@
+---
+- hosts: pve01
+  become: true
+  vars_files:
+    - vars/secrets.yml
+
+  vars_prompt:
+  - name: VMID
+    prompt: Enter VM ID
+    private: false
+
+  - name: VMName
+    prompt: Enter VM Name
+    private: false
+
+  roles:
+    - vm_create_from_template

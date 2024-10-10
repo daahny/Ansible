@@ -1,0 +1,10 @@
+---
+- include_tasks: essential.yml
+- include_tasks: ssh.yml
+- include_tasks: repos.yml
+- include_tasks: packages.yml
+- include_tasks: pcie_passthrough.yml
+- include_tasks: api_ro_user.yml
+- include_tasks: api_rw_user.yml
+- include_tasks: onedrive.yml
+- include_tasks: mail.yml

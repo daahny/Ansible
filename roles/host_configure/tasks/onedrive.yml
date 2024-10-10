@@ -1,0 +1,51 @@
+---
+- name: Create .config directory
+  file:
+    path: /root/.config
+    state: directory
+    mode: 0755
+
+- name: Create onedrive conf directory
+  file:
+    path: /root/.config/onedrive
+    state: directory
+    mode: 0755
+
+- name: Download onedrive default conf file
+  get_url: 
+    url: https://raw.githubusercontent.com/abraunegg/onedrive/master/config
+    dest: /root/.config/onedrive/config
+    mode: 0755
+
+- name: Get loginctl linger status for root
+  command: loginctl show-user root
+  register: loginctl_status
+
+- name: Update loginctl linger status for root
+  command: loginctl enable-linger root
+  when: '"Linger=yes" not in loginctl_status.stdout'
+
+- name: Get onedrive status
+  command: systemctl --user is-enabled onedrive
+  register: onedrive_status
+
+- name: Enable onedrive
+  command: systemctl --user enable onedrive
+  when: '"enabled" not in onedrive_status.stdout'
+  notify: Start onedrive
+
+- name: Create Dans_Stuff folder in onedrive
+  file:
+    state: directory
+    path: /datapool/backup/Dans_Stuff
+
+- name: Update onedrive conf
+  lineinfile:
+    path: ~/.config/onedrive/config
+    backrefs: true
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '^#?\s?sync_dir.*$', line: 'sync_dir = "/datapool/backup"'}
+    - { regexp: '^#?\s?upload_only.*$', line: 'upload_only = "true"'}
+    - { regexp: '^#?\s?no_remote_delete.*$', line: 'no_remote_delete = "true"'}

@@ -1,0 +1,50 @@
+---
+- name: Create smtp_header_checks
+  file:
+    path: /etc/postfix/smtp_header_checks
+    state: touch
+    mode: 0600
+
+- name: Update smtp_header_checks
+  lineinfile:
+    path: /etc/postfix/smtp_header_checks
+    line: "/^From:.*/ REPLACE From: {{ mail_user_name }} <{{ mail_user }}>"
+    state: present
+  register: updated_smtp_header_checks
+
+- name: Postmap smtp_header_checks
+  command: postmap hash:/etc/postfix/smtp_header_checks
+  when: updated_smtp_header_checks.changed
+
+- name: Create sasl_passwd
+  file:
+    path: /etc/postfix/sasl_passwd
+    state: touch
+    mode: 0600
+
+- name: Update sasl_passwd
+  lineinfile:
+    path: /etc/postfix/sasl_passwd
+    line: "smtp-mail.outlook.com {{ mail_user }}:{{ mail_password }}"
+    state: present
+  register: updated_sasl_passwd
+
+- name: Postmap sasl_passwd
+  command: postmap /etc/postfix/sasl_passwd
+  when: updated_sasl_passwd.changed
+
+- name: Update postfix.cf
+  lineinfile:
+    path: /etc/postfix/main.cf
+    line: "{{ item }}"
+  with_items:
+    - "relayhost = {{ mail_relayhost }}"
+    - "smtp_use_tls = yes"
+    - "smtp_sasl_auth_enable = yes"
+    - "smtp_sasl_security_options ="
+    - "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
+    - "smtp_tls_CAfile = /etc/ssl/certs/Entrust_Root_Certification_Authority.pem"
+    - "smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_tls_session_cache"
+    - "smtp_tls_session_cache_timeout = 3600s"
+    - "smtp_header_checks = pcre:/etc/postfix/smtp_header_checks"
+  notify: Reload postfix

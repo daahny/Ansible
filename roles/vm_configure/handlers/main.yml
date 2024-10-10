@@ -1,0 +1,29 @@
+---
+- name: Restart SSHD
+  service:
+    name: sshd
+    state: restarted
+
+- name: Start and Enable qemu-guest-agent
+  service:
+    name: qemu-guest-agent
+    state: started
+    enabled: true
+
+- name: Start and Enable Docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Reload Systemd Daemons
+  command: systemctl daemon-reload
+
+- name: Start and Enable Docker-Exporter
+  service:
+    name: docker-exporter
+    state: started
+    enabled: true
+
+- name: Reload firewalld
+  command: firewall-cmd --reload

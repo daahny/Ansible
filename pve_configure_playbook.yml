@@ -1,0 +1,8 @@
+---
+- hosts: pveclx
+  become: yes
+  vars_files:
+    - vars/secrets.yml
+
+  roles:
+    - host_configure

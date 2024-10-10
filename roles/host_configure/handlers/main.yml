@@ -1,0 +1,29 @@
+---
+- name: Restart SSHD
+  service:
+    name: sshd
+    state: restarted
+
+- name: proxmox-boot-tool refresh
+  command: proxmox-boot-tool refresh
+
+- name: Update initramfs
+  command: update-initramfs -u -k all
+
+- name: Print api_ro_user token value
+  debug:
+    var: api_ro_token_out.stdout | regex_search('\w+-\w+-\w+-\w+-\w+')
+
+- name: Print api_rw_user token value
+  debug:
+    var: api_rw_token_out.stdout | regex_search('\w+-\w+-\w+-\w+-\w+')
+
+- name: Start onedrive
+  command: systemctl --user start onedrive
+
+- name: Reload postfix
+  command: postfix reload
+
+- name: Reboot required
+  debug:
+    msg: Reboot required for PCIe passthrough

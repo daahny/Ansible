@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker container metrics exporter for prometheus
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User={{ ansible_hostname }}
+ExecStart=/usr/bin/python3 /usr/local/bin/docker-exporter/main.py
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,46 @@
+---
+- name: Create docker-exporter bin dir
+  file:
+    state: directory
+    path: /usr/local/bin/docker-exporter
+    mode: 0755
+
+- name: Check for docker-exporter py scripts
+  stat:
+    path: /usr/local/bin/docker-exporter/main.py
+  register: filestat
+
+- name: Get docker-exporter py scripts
+  git:
+    dest: /usr/local/bin/docker-exporter
+    repo: 'https://github.com/daahny/Docker-Exporter.git'
+    force: yes
+  when: not filestat.stat.exists
+
+- name: Add executable bit on docker-exporter py scripts
+  file:
+    path: "{{ item }}"
+    owner: "{{ ansible_hostname }}"
+    group: "{{ ansible_hostname }}"
+    mode: 0544
+  with_items:
+    - /usr/local/bin/docker-exporter/main.py
+    - /usr/local/bin/docker-exporter/container.py
+
+- name: Create systemd service
+  template: 
+    src: "templates/docker-exporter.j2"
+    dest: "/etc/systemd/system/docker-exporter.service"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Reload Systemd Daemons
+    - Start and Enable Docker-Exporter
+
+- name: Update firewalld rules for docker-exporter
+  firewalld:
+    port: 4000/tcp
+    permanent: true
+    state: enabled
+  notify: Reload firewalld
