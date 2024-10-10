@@ -1,0 +1,7 @@
+ansible.cfg
+hosts.ini
+vars/secrets.yml
+group_vars/pveclx.yml
+group_vars/templates.yml
+roles/vm_create/handlers/main.yml
+roles/vm_create_from_template/handlers/main.yml
